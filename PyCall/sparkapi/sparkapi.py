@@ -32,7 +32,7 @@ MA 02110-1301, USA.
 ------------------------------------------------------------------------
 History:
   01 jan 2015 - Dominique - v 0.1 (première release)
-  
+  03 jan 2015 - Dominique - v 0.2 ajout de fonctionnalités + consistance
 ------------------------------------------------------------------------
 Remarks:
   Doc Python sur urllib2
