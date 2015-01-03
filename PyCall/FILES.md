@@ -15,8 +15,19 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           paramètres de votre PROPRE compte Spark Cloud
                           et le CORE_ID de votre propre Spark Core
 
+* netled.py             - fait des appels de fonction sur le core 
+                          pour controler des LED sur le core via le 
+                          programme netled.ino
+                          
+* lecture-tmp36.py      - fait des lectures de variable sur le core
+                          pour lire la valeur du senseur de température
+                          tmp36. Voir le programme lecture-tmp36.ino 
+
 * buttoncounter.py      - fait des appels sur un core faisant fonctionner le
                           programme buttoncounter.ino sur votre Core.
+                          
+* core-info.py          - Obtenir plus d'information sur votre core.
+						  Les fonctions et les variables publiées.
 
 
 == Les Tutoriels Spark Core ==

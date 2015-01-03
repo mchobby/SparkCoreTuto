@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-"""buttoncounter.py
+"""core-info.py
 
-Appel d'API sur un Spark Core faisant fonctionner le programme
-  buttoncounter.ino 
+Appel d'API sur un Spark Core pour obtenir des informations sur 
+  votre Core. Retourne en autre les fonctions et les variables publiés.
   
-  retourne la valeur du compteur. Demande un reset du compteur sur
-  le spark core lorsque sa valeur dépasse 5.
-
 Copyright 2015 DMeurisse <info@mchobby.be>
 
 Voir tutoriel:
@@ -50,8 +47,8 @@ config = Config()
 
 
 def main():
-	# Execute le programme qui récupère le nombre de pression sur 
-	#  le Spark Core
+	# Execute le programme qui récupère le température lue sur un 
+	#  Spark Core
 	api = SparkApi( access_token = config.access_token, debug = False )
 	# ou utiliser directement votre access_token
 	#api = SparkApi( access_token = '123412341234', debug = False )
@@ -63,27 +60,19 @@ def main():
 	# ou utiliser directement votre core_id
 	#core = api.get_core( '0123456789abcdef' )
 	
-	# Lire une variable sur le core
-	# retourne un tuple (connected, valeur)
-	value = core.value_of( 'counter' )
-	
-	if( value[0] == False ):
-		print( 'le Core n est pas connecté' )
+	# Lecture et affichage des info d'un Core.
+	# retourne un tuple (connected, information_structure)
+	print( '-- Dumping Core Info --' )
+	core.dump_info()
+
+	# Vous pouvez également accéder directement aux informations
+	print( '-- Accessing Core.info() data --' ) 
+	content = core.info()
+	if( content[0] == False ):
+	  print('Core not connected')
 	else:
-		print( 'compteur = %i' % value[1] )
-	
-	# Si connecté et 'valeur > 5' ???
-	if( value[0] and value[1]>5 ):
-		print( 'Envoyer ordre "reset" compteur' )
-		# Faire un reset du compteur sur le core.
-		# En utilisant sa fonction "reset" publier sur Spark Cloud
-		result = core.call( 'reset' ) 
-		print( "connecté=%s, résultat=%i" % result ) 
-		if( result[0] == False ):
-			print( 'le Core n est pas connecté' )
-		else:
-			print( 'La fonction à répondu %i' % result[1] )
-	
+	  print( content[1] )
+		
 	return 0
 
 if __name__ == '__main__':

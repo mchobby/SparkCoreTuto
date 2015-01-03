@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-"""buttoncounter.py
+"""cores-list.py
 
-Appel d'API sur un Spark Core faisant fonctionner le programme
-  buttoncounter.ino 
+Appel d'API sur un Spark Core pour lister les Cores associés à
+votre compte Spark Cloud.
   
-  retourne la valeur du compteur. Demande un reset du compteur sur
-  le spark core lorsque sa valeur dépasse 5.
-
 Copyright 2015 DMeurisse <info@mchobby.be>
 
 Voir tutoriel:
@@ -35,7 +32,7 @@ MA 02110-1301, USA.
 
 ------------------------------------------------------------------------
 History:
-  01 jan 2015 - Dominique - v 0.1 (première release)
+  03 jan 2015 - Dominique - v 0.1 (première release)
 """  
 from sparkapi.sparkapi import SparkApi
 from sparkapi.config import Config 
@@ -50,40 +47,39 @@ config = Config()
 
 
 def main():
-	# Execute le programme qui récupère le nombre de pression sur 
-	#  le Spark Core
+	# Execute le programme qui récupère le température lue sur un 
+	#  Spark Core
 	api = SparkApi( access_token = config.access_token, debug = False )
 	# ou utiliser directement votre access_token
 	#api = SparkApi( access_token = '123412341234', debug = False )
 		
-	# Créer un objet Core à partir du core_id 
-	#   le core_id provient du fichier de configuration sparkapi.ini
-	#   dans la section [CORES]
-	core = api.get_core( config.cores['core0'] ) 
-	# ou utiliser directement votre core_id
-	#core = api.get_core( '0123456789abcdef' )
+	# Afficher la liste des cores
+	print( '----- dump_core_list -----' ) 	
+	api.dump_core_list()
 	
-	# Lire une variable sur le core
-	# retourne un tuple (connected, valeur)
-	value = core.value_of( 'counter' )
+	# obtenir une liste des cores 
+	#   retourne une liste de (core_id, core_name, connected )
+	print( '----- core_list -----' )
+	cores = api.core_list()
+	for core in cores:
+		print( 'core id %s is %s' % (core[0], 'connected' if core[2]==True else 'NOT connected') )
 	
-	if( value[0] == False ):
-		print( 'le Core n est pas connecté' )
-	else:
-		print( 'compteur = %i' % value[1] )
+	# Données brutes tels que renvoyées par le l'API Spark Cloud
+	print( '----- api_get_core_list -----' )
+	print( api.api_get_core_list() )
 	
-	# Si connecté et 'valeur > 5' ???
-	if( value[0] and value[1]>5 ):
-		print( 'Envoyer ordre "reset" compteur' )
-		# Faire un reset du compteur sur le core.
-		# En utilisant sa fonction "reset" publier sur Spark Cloud
-		result = core.call( 'reset' ) 
-		print( "connecté=%s, résultat=%i" % result ) 
-		if( result[0] == False ):
-			print( 'le Core n est pas connecté' )
-		else:
-			print( 'La fonction à répondu %i' % result[1] )
-	
+	print( '----- Exploration des Cores connectés -----' )
+	# Pour le fun... Explorer l'interface des cores connectés
+	cores = api.core_list()
+	for core in cores:
+		print( '--- %s (%s) ----' % (core[0], core[1]) )
+		print( 'Connected' if core[2]==True else 'NOT CONNECTED' )
+		# Afficher l'API du core s'il est connecté
+		if core[2]==True:
+			# Créer un objet pour accéder aux fonctionalités du Core
+			coreObj = api.get_core( core[0] )
+			coreObj.dump_info()
+		
 	return 0
 
 if __name__ == '__main__':

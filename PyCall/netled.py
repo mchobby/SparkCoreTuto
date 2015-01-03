@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-"""buttoncounter.py
+"""netled.py
 
 Appel d'API sur un Spark Core faisant fonctionner le programme
-  buttoncounter.ino 
+  netled.ino 
   
-  retourne la valeur du compteur. Demande un reset du compteur sur
-  le spark core lorsque sa valeur dépasse 5.
+  Permet de commander une sortie directement une sortie digitale 
+  par l'intermédiaire d'une fonction publiée sur Spark Cloud.
 
 Copyright 2015 DMeurisse <info@mchobby.be>
 
@@ -35,10 +35,11 @@ MA 02110-1301, USA.
 
 ------------------------------------------------------------------------
 History:
-  01 jan 2015 - Dominique - v 0.1 (première release)
+  02 jan 2015 - Dominique - v 0.1 (première release)
 """  
 from sparkapi.sparkapi import SparkApi
 from sparkapi.config import Config 
+import time
 
 # Ouvre le fichier sparkapi.ini pour éviter de Hard Coder des données
 # sensible comme l'access_token dans les programmes d'exemple publié sur
@@ -51,39 +52,30 @@ config = Config()
 
 def main():
 	# Execute le programme qui récupère le nombre de pression sur 
-	#  le Spark Core
+	#  le Spark Core.
 	api = SparkApi( access_token = config.access_token, debug = False )
 	# ou utiliser directement votre access_token
 	#api = SparkApi( access_token = '123412341234', debug = False )
-		
+	
 	# Créer un objet Core à partir du core_id 
 	#   le core_id provient du fichier de configuration sparkapi.ini
 	#   dans la section [CORES]
-	core = api.get_core( config.cores['core0'] ) 
+	core = api.get_core( config.cores['core0'] )
 	# ou utiliser directement votre core_id
 	#core = api.get_core( '0123456789abcdef' )
 	
-	# Lire une variable sur le core
-	# retourne un tuple (connected, valeur)
-	value = core.value_of( 'counter' )
-	
-	if( value[0] == False ):
-		print( 'le Core n est pas connecté' )
-	else:
-		print( 'compteur = %i' % value[1] )
-	
-	# Si connecté et 'valeur > 5' ???
-	if( value[0] and value[1]>5 ):
-		print( 'Envoyer ordre "reset" compteur' )
-		# Faire un reset du compteur sur le core.
-		# En utilisant sa fonction "reset" publier sur Spark Cloud
-		result = core.call( 'reset' ) 
-		print( "connecté=%s, résultat=%i" % result ) 
-		if( result[0] == False ):
-			print( 'le Core n est pas connecté' )
-		else:
-			print( 'La fonction à répondu %i' % result[1] )
-	
+	# retourne un tuple (connected, resultat_de_la_fonction)
+	value = core.call( 'led', 'L1,HIGH' ) # Allumer LED1, appelle la fonction LED avec paramètre L1,HIGH
+	print(  'le Core n est pas connecté' if value[0] == False else 'la fonction à répondu = %i' % value[1] )
+	time.sleep( 2 )
+	value = core.call( 'led', 'L1,LOW' ) # Eteindre LED1
+	print(  'le Core n est pas connecté' if value[0] == False else 'la fonction à répondu = %i' % value[1] )
+	value = core.call( 'led', 'L2,HIGH' ) # Allumer LED2 
+	print(  'le Core n est pas connecté' if value[0] == False else 'la fonction à répondu = %i' % value[1] )
+	time.sleep( 2 )	
+	value = core.call( 'led', 'L2,LOW' ) # Eteindre LED2	
+	print(  'le Core n est pas connecté' if value[0] == False else 'la fonction à répondu = %i' % value[1] )
+		
 	return 0
 
 if __name__ == '__main__':
