@@ -25,7 +25,10 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           tmp36. Voir le programme lecture-tmp36.ino 
 
 * buttoncounter.py      - fait des appels sur un core faisant fonctionner le
-                          programme buttoncounter.ino sur votre Core.
+                          programme buttoncounter.ino.
+                          
+* magneticswitch        - fait des appels sur un core faisant fonctionner
+                          le programme magneticswitch.ino
                           
 * core-info.py          - Obtenir plus d'information sur un core.
 						  Les fonctions et les variables publiées.
