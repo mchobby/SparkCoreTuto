@@ -33,6 +33,7 @@ MA 02110-1301, USA.
 History:
   01 jan 2015 - Dominique - v 0.1 (première release)
   03 jan 2015 - Dominique - v 0.2 ajout de fonctionnalités + consistance
+  06 jan 2015 - Dominique - v 0.3 Ajout de la classe SparkCoreTinker
 ------------------------------------------------------------------------
 Remarks:
   Doc Python sur urllib2
@@ -100,11 +101,22 @@ class SparkApi( object ):
 		self.printdebug( 'Spark API Url: %s' % self.__api_base_url )
 		self.printdebug( 'access_token: %s' % self.__access_token )
 		
+	def get_core_by_class( self, core_id, spark_core_class ):
+		""" Créee et initialise un objet de la classe spark_core_class 
+		    (SparkCore ou dérivé) pour un Core_id donné.
+		    
+		    Permet de créer une classe Spark Core avec des methodes 
+		    spécialisées."""
+		assert issubclass( spark_core_class, SparkCore ), 'spark_core_class must be a SparkCore (or derivated) class'
+		_obj = spark_core_class( self, core_id )
+		
+		return _obj 
+
 	def get_core( self, core_id ):
 		""" Créer un objet SparkCore pour un Core_id donné """
-		_obj = SparkCore( self, core_id )
-		
-		return _obj
+		# _obj = SparkCore( self, core_id )
+		# return _obj
+		return self.get_core_by_class( core_id, SparkCore ) # create a SparkCore object
 		
 	def api_core_get_variable( self, core_id, variable_name ):
 		""" Faire une requête sur l'API Spark Cloud pour retrouver une
@@ -334,6 +346,17 @@ class SparkCore( object ):
 		self.__owner = spark_api
 		
 		self.__owner.printdebug( 'SparkCore object created for core_id %s' % core_id )
+	
+	@property
+	def api( self ):
+		""" Renvoi une reference vers l'instance SparkApi. Permettra 
+		l'écriture d'un code plus propre """
+		return self.__owner
+		
+	@property
+	def core_id( self ):
+		""" Retourne le core_id """
+		return self.__core_id
 		
 	def value_of( self, variable_name ):
 		""" Interroge le core pour retrouver la valeur de la variable 
@@ -348,7 +371,7 @@ class SparkCore( object ):
 			
 		assert isinstance( variable_name, basestring), 'variable_name must be str/unicode type' # basestring match str & unicode
 		
-		content = self.__owner.api_core_get_variable( self.__core_id, variable_name )
+		content = self.api.api_core_get_variable( self.__core_id, variable_name )
 		return content
 
 	def call( self, function_name, params = '' ):
@@ -369,7 +392,7 @@ class SparkCore( object ):
 		assert isinstance(function_name, basestring), 'function_name must be str/unicode type' # basestring match str & unicode
 		assert isinstance(params, basestring), 'params must be str/unicode type' # basestring match str & unicode
 		
-		content = self.__owner.api_core_call_function( self.__core_id, function_name, params )
+		content = self.api.api_core_call_function( self.__core_id, function_name, params )
 		
 		return content
 
@@ -377,7 +400,7 @@ class SparkCore( object ):
 		""" obtenir les informations sur le core, tel que retrouné par
 			l'API. Contient également les informations sur les 
 			fonctions et variables publiées """
-		content = self.__owner.api_core_get_info( self.__core_id )
+		content = self.api.api_core_get_info( self.__core_id )
 		
 		return content
 		
@@ -401,3 +424,132 @@ class SparkCore( object ):
 			print ( '   %s' % (func) )
 
 		# {u'functions': [], u'name': u'mch-demo', u'variables': {u'reading': u'int32', u'temperature': u'double', u'voltage': u'double'}, u'connected': True, u'cc3000_patch_version': u'1.29', u'id': u'54ff6c066667515111481467'}
+
+class TinkerError( Exception ):
+	""" Specific error class linked to SparkCoreTinker class """
+	pass
+	
+class SparkCoreTinker( SparkCore ):
+	""" Specialized class that can be used with Core running Tinker """
+	
+	__signatureChecked = False # permet de savoir si la signature de Tinker à bien été verifiée sur le core  
+	
+	def __init__( self, spark_api, core_id ):
+		# Initialisation de la classe de base
+		SparkCore.__init__( self, spark_api, core_id )
+		# Initialisation locale
+		__signatureChecked = False
+		
+	def check_tinker_signature( self ):
+		""" verifie si le Core fait bien tourner Tinker.
+		Si le test est déjà positif alors ne plus retester. """
+		if self.__signatureChecked == True:
+			return True
+		
+		# obtenir l'interface publiée sur le core
+		info = self.api.api_core_get_info( self.core_id )
+		if( info[0] == False ):
+			# Core not connected -> retourner False
+			return False
+		
+		# Verifier que les fonctions de Tinker soient bien présentes
+		functions = info[1]['functions']
+		try:
+			functions.index('digitalread') # will raise exception if missing
+			functions.index('digitalwrite') 
+			functions.index('analogread')
+			functions.index('analogwrite')
+			
+			self.__signatureChecked = True
+		except ValueError:
+			self.__signatureChecked = False
+
+		# Faire le test de la signature
+		return self.__signatureChecked
+		
+	def assert_tinker_signature( self ):
+		""" Vérifie la signature de Tinker sur le Core sous forme 
+		assertion """
+		assert self.check_tinker_signature()==True, 'Tinker is not running on the Core' 
+		
+	def digitalread( self, pin_name ):
+		""" permet de lire l'état d'une broche digitale via Tinker.
+		
+		Parameters:
+			pin_name (str) - Nom de la broche sur Tinker (ex: D4)
+		
+		Returns:
+			1 / 0 en fonction de l'état de la broche.
+		"""
+		self.assert_tinker_signature()
+		
+		value = self.call( 'digitalread', pin_name )
+		if( value[0] == False ):
+			raise TinkerError( 'Core is not connected!' )
+		return value[1]  
+
+	def digitalwrite( self, pin_name, activate ):
+		""" permet de modifier l'état d'une broche digitale via tinker 
+		
+		Parameters:
+			pin_name (str) - Nom de la broche sur Tinker (ex: D4)
+			activate (bool) - activer/désactiver la broche
+		
+		Returns:
+			Le résultat de la fonction digitalwrite() exécutée sur le core.
+		"""
+		self.assert_tinker_signature()
+		
+		value = self.call( 'digitalwrite', pin_name+','+('HIGH' if activate else 'LOW') )
+		if( value[0] == False ):
+			raise TinkerError( 'core is not connected!' )
+		return value[1] 
+
+	def analogread( self, pin_name ):
+		""" permet de lire la valeur d'une des broches analogiques via tinker
+		
+		Parameters:
+			pin_name (str) - nom de la broche analogique (ex: A0)
+			
+		Returns:
+			Le résultat sous forme d'un entier entre 0 et 4095
+		"""
+		self.assert_tinker_signature()
+		
+		value = self.call( 'analogread', pin_name )
+		if( value[0] == False ):
+			raise TnikerError( 'core is not connected!' )
+		return value[1]
+		
+	def analogread_voltage( self, pin_name ):
+		""" Permet de lire la valeur EN VOLTS d'une broche analogique via 
+		tinker.
+		
+		Parameters:
+			pin_name (str) - nom de la broche analogique (ex: A0)
+			
+		Returns:
+			Le résultat sous forme d'un entier entre 0 et 4095
+		"""
+		return (3.3 * self.analogread( pin_name ))/4095
+
+	def analogwrite( self, pin_name, value ):
+		""" Permet d'activer une sortie PWM sur le core (conformément
+		au standard mis en place par le Framework Wiring dans Arduino).
+		
+		Parameters:
+			pin_name (str) - nom de la broche pour laquelle le signal PWM
+							 est activé. Voir graphe des broches sur 
+							 http://mchobby.be/wiki/index.php?title=Spark-Core-Brochage
+							 
+			value (int) - représente le cycle utile (duty cycle) du signal
+						  en 255ieme (ex: 128 -> 50% de cycle utile)
+		"""
+		assert 0 <= value <= 255, 'invalid PWM value' 
+		
+		self.assert_tinker_signature()
+		
+		value = self.call( 'analogwrite', pin_name+','+str(value) )
+		if( value[0] == False ):
+			raise TnikerError( 'core is not connected!' )
+		return value[1]

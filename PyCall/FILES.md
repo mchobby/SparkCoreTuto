@@ -35,6 +35,13 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
 						  
 * cores-list.py			- Lister les cores associé à votre compte
                           Spark Cloud
+                          
+* core-tinkerting.py    - Comment définir une classe SparkCoreTinker
+						  et utiliser ses méthodes pour faciliter les
+						  appel sur l'API publié par le Spark Core.
+						  Exemple basé sur Tinker de SPARK :-)
+						  Vous pouvez donc controler directement Tinker
+						     depuis Python :-)
 
 
 == Les Tutoriels Spark Core ==
