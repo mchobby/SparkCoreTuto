@@ -34,6 +34,7 @@ History:
   01 jan 2015 - Dominique - v 0.1 (première release)
   03 jan 2015 - Dominique - v 0.2 ajout de fonctionnalités + consistance
   06 jan 2015 - Dominique - v 0.3 Ajout de la classe SparkCoreTinker
+  07 jan 2015 - Dominique -       Ajout 
 ------------------------------------------------------------------------
 Remarks:
   Doc Python sur urllib2
@@ -45,6 +46,21 @@ import json
 
 # --- API Spark Cloud ---
 SPARK_API_URL_V1 = 'https://api.spark.io/v1/devices/'
+
+# --- Spark Cloud Errors ---
+# Voyez la documentation en français sur
+#     http://wiki.mchobby.be/index.php?title=Spark-Could-API-Errors
+#
+#   { Http_error : (Http_Error_Text, Spark_Error_description), ... ]
+SPARK_HTTP_ERRORS = { 
+
+    400 : ( 'Bad Request'  , 'Your request is not understood by the Core, or the requested subresource (variable/function) has not been exposed. wrong access token may also cause this error!' ), 
+	401 : ( 'Unauthorized' , 'Your access token is not valid.' ),
+	403 : ( 'Forbidden'    , 'Your access token is not authorized to interface with this Core.' ),
+	404 : ( 'Not Found'    , 'The Core you requested is not currently connected to the cloud.' ),
+	408 : ( 'Timed Out'    , 'The cloud experienced a significant delay when trying to reach the Core.' ),
+	500 : ( 'Server errors', 'Spark Server Failure. Something went wrong on Spark end.' ) 
+	}
 
 class SparkApiError( HTTPError ):
 	""" Erreur d'appel sur l'API Spark. Contient des infos complémentaires
@@ -236,27 +252,12 @@ class SparkApi( object ):
 		HTTPError est surclassée en SparkApiError pour contenir des 
 		informations complémentaires (vachement pratique). """
 		assert isinstance( err, HTTPError ), 'err must be HttpError type!'
-					
-		# Spark API response 400 'Bad Request'
-		if( err.code == 400 ):
-			apierror = SparkApiError( err, 'Access_token may be invalid' )
-			raise apierror 
-
-		# Spark API response 403 'Access Forbidden'
-		if( err.code == 403 ):
-			apierror = SparkApiError( err, 'core_id may be invalid' )
-			raise apierror 
-
-		# Spark API response 404 'Not found'
-		if( err.code == 404 ):
-			apierror = SparkApiError( err, 'function_name or variable_name may be invalid' )
-			raise apierror 
-
-		# Spark API response 408 'TimeOut'
-		if( err.code == 408 ):
-			apierror = SparkApiError( err, 'Core probably offline or internet connexion broken' )
-			raise apierror
 		
+		if( err.code in SPARK_HTTP_ERRORS ):
+			# relancer l'erreur avec le texte d'aide !
+			apierror = SparkApiError( err, SPARK_HTTP_ERRORS[err.code][1] )
+			raise apierror
+			 					
 		# re-lancer l'exception
 		raise err
 	
