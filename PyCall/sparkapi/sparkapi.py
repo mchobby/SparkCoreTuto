@@ -34,7 +34,9 @@ History:
   01 jan 2015 - Dominique - v 0.1 (première release)
   03 jan 2015 - Dominique - v 0.2 ajout de fonctionnalités + consistance
   06 jan 2015 - Dominique - v 0.3 Ajout de la classe SparkCoreTinker
-  07 jan 2015 - Dominique -       Ajout 
+  07 jan 2015 - Dominique -       Refactoring
+  10 jan 2015 - Dominique -       get_api_access_tokens
+								  SPARK_API_URL_V1 *** changed !! ***
 ------------------------------------------------------------------------
 Remarks:
   Doc Python sur urllib2
@@ -42,10 +44,10 @@ Remarks:
 """
 from urllib2 import HTTPError
 import urllib2, urllib
-import json 
+import json, base64
 
 # --- API Spark Cloud ---
-SPARK_API_URL_V1 = 'https://api.spark.io/v1/devices/'
+SPARK_API_URL_V1 = 'https://api.spark.io/v1/'
 
 # --- Spark Cloud Errors ---
 # Voyez la documentation en français sur
@@ -55,7 +57,7 @@ SPARK_API_URL_V1 = 'https://api.spark.io/v1/devices/'
 SPARK_HTTP_ERRORS = { 
 
     400 : ( 'Bad Request'  , 'Your request is not understood by the Core, or the requested subresource (variable/function) has not been exposed. wrong access token may also cause this error!' ), 
-	401 : ( 'Unauthorized' , 'Your access token is not valid.' ),
+	401 : ( 'Unauthorized' , 'Your access_token/account_info is not valid.' ),
 	403 : ( 'Forbidden'    , 'Your access token is not authorized to interface with this Core.' ),
 	404 : ( 'Not Found'    , 'The Core you requested is not currently connected to the cloud.' ),
 	408 : ( 'Timed Out'    , 'The cloud experienced a significant delay when trying to reach the Core.' ),
@@ -143,7 +145,7 @@ class SparkApi( object ):
 		assert isinstance( core_id, basestring), 'core_id must be str/unicode type' # basestring match str & unicode
 		assert isinstance( variable_name, basestring), 'variable_name must be str/unicode type' # basestring match str & unicode
 		
-		url = self.__api_base_url+core_id+'/'+variable_name+'?access_token='+self.__access_token
+		url = self.__api_base_url+'devices/'+core_id+'/'+variable_name+'?access_token='+self.__access_token
 		self.printdebug( url )
 		try:
 			try:
@@ -181,7 +183,7 @@ class SparkApi( object ):
 		assert isinstance( function_name, basestring), 'function_name must be str/unicode type' # basestring match str & unicode
 		assert isinstance( params, basestring), 'params must be str/unicode type' # basestring match str & unicode
 
-		url =  self.__api_base_url+core_id+'/'+function_name
+		url =  self.__api_base_url+'devices/'+core_id+'/'+function_name
 		values = {'access_token' : self.__access_token,
 			'params' : params }
 		self.printdebug( 'POST to %s' % url )
@@ -218,7 +220,7 @@ class SparkApi( object ):
 		    fonctions & variables publiée sur Spark Cloud"""
 		assert isinstance( core_id, basestring), 'core_id must be str/unicode type' # basestring match str & unicode
 		
-		url = self.__api_base_url+core_id+'?access_token='+self.__access_token
+		url = self.__api_base_url+'devices/'+core_id+'?access_token='+self.__access_token
 		self.printdebug( url )
 		try:
 			try:
@@ -260,6 +262,56 @@ class SparkApi( object ):
 			 					
 		# re-lancer l'exception
 		raise err
+		
+	def api_get_access_tokens( self, spark_username, spark_password ):
+		""" Obtenir la liste des access_token liés à votre compte Spark
+		
+		Parameters:
+			spark_username (str) - votre compte utilisateur utilisé 
+				sur Spark Cloud. Habituellement une adresse email
+			spark_password (str) - votre mot de passe du compte spark
+				cloud.
+		
+		Returns:
+		retourne le tuple (connected, api_result) avec api_result tel
+		que renvoyées par l'API Spark Cloud.
+		S'il n'y a pas d'exception alors l'API est connectée... le 
+		premier élément du tuple est toujours True.
+		
+		api_result est une liste de dictionnaire semblable à
+		{'token': '12xxxxxxxxxxxxxxxxxxxxxxx75', 'client': 'spark', 
+		  'expires_at': '2015-02-16T20:04:45.728Z'}
+		  
+		Remarks:
+			Basic Authorization avec urllib en Python
+			http://www.voidspace.org.uk/python/articles/authentication.shtml
+		"""
+		url = self.__api_base_url+'access_tokens'
+		self.printdebug( url )
+		
+		base64UserPassword = base64.encodestring( '%s:%s' % (spark_username, spark_password) )[:-1]
+		req = urllib2.Request( url ) # No DATA parameter
+		# Ajout basic authorization à l'entête
+		req.add_header( "Authorization", "Basic %s" % base64UserPassword )
+
+		try:
+			response = urllib2.urlopen(req)
+		except HTTPError, err:
+			if( err.code == 400 ):
+				# Eviter le confusion de lecture sur erreur 400
+				# relancer l'erreur avec le texte d'aide SPARK_HTTP_ERRORS 
+				# orienté Core!
+				apierror = SparkApiError( err, 'Spark Account may be invalid' )
+				raise apierror				
+			else:
+				# gère les cas d'erreur Http Error et fait une surcharge si
+				# approprié
+				self.api_manage_error( err )
+				
+		html = response.read()
+		data = json.loads( html )
+		
+		return ( True, data ) # No exception means API connected
 	
 	def api_get_core_list( self ):
 		""" Obtenir la liste des Cores liées au compte spark
@@ -274,7 +326,7 @@ class SparkApi( object ):
 		La structure tuple est utilisé pour rester consistant avec 
 		les autres appels
 		"""	     
-		url = self.__api_base_url+'?access_token='+self.__access_token
+		url = self.__api_base_url+'devices/'+'?access_token='+self.__access_token
 		self.printdebug( url )
 		try:
 			response = urllib2.urlopen( url )
