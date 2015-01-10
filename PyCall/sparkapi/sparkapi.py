@@ -47,7 +47,8 @@ import urllib2, urllib
 import json, base64
 
 # --- API Spark Cloud ---
-SPARK_API_URL_V1 = 'https://api.spark.io/v1/'
+SPARK_API_URL    = 'https://api.spark.io/'
+SPARK_API_URL_V1 = SPARK_API_URL+'v1/'
 
 # --- Spark Cloud Errors ---
 # Voyez la documentation en français sur
@@ -285,6 +286,9 @@ class SparkApi( object ):
 		Remarks:
 			Basic Authorization avec urllib en Python
 			http://www.voidspace.org.uk/python/articles/authentication.shtml
+		
+		La structure tuple est utilisé pour rester consistant avec 
+		les autres appels
 		"""
 		url = self.__api_base_url+'access_tokens'
 		self.printdebug( url )
@@ -312,7 +316,65 @@ class SparkApi( object ):
 		data = json.loads( html )
 		
 		return ( True, data ) # No exception means API connected
-	
+		
+	def api_create_access_token( self, spark_username, spark_password, client_id, client_pswd = None):
+		""" Crée un nouvel access token pour votre compte spark. 
+
+		Parameters:
+			spark_username (str) - votre compte utilisateur utilisé 
+				sur Spark Cloud. Habituellement une adresse email
+			spark_password (str) - votre mot de passe du compte spark
+				cloud.
+				
+			client_id (str) - Identification du client.
+			client_pswd (str) - Mot de passe pour le client.
+						Non utilisé par Spark pour le moment au moment
+						de la création du token "client_id:client_id"
+						sera utilisé comme recommandé dans la doc Spark.
+		
+		Returns:
+		Retourne le tuple (connected, api_result) avec api_result tel
+		que renvoyées par l'API Spark Cloud.
+		S'il n'y a pas d'exception alors l'API est connectée... le 
+		premier élément du tuple est toujours True. 
+		
+		Remarks:
+		La structure tuple est utilisé pour rester consistant avec 
+		les autres appels		
+		"""
+		url = SPARK_API_URL+'oauth/token' # pas de versionning pour cette URL!
+
+		values = {'grant_type' : 'password',
+			'username' : spark_username,
+			'password' : spark_password }
+		self.printdebug( 'POST to %s' % url )
+		self.printdebug( values )
+		data = urllib.urlencode(values)
+				
+		base64ClientPassword = base64.encodestring( '%s:%s' % (client_id, client_id if client_pswd == None else client_pswd) )[:-1]
+		req = urllib2.Request( url, data ) 
+		# Ajout basic authorization à l'entête
+		req.add_header( "Authorization", "Basic %s" % base64ClientPassword )
+
+		try:
+			response = urllib2.urlopen(req)
+		except HTTPError, err:
+			if( err.code == 400 ):
+				# Eviter le confusion de lecture sur erreur 400
+				# relancer l'erreur avec le texte d'aide SPARK_HTTP_ERRORS 
+				# orienté Core!
+				apierror = SparkApiError( err, 'Spark Account may be invalid' )
+				raise apierror				
+			else:
+				# gère les cas d'erreur Http Error et fait une surcharge si
+				# approprié
+				self.api_manage_error( err )
+				
+		html = response.read()
+		data = json.loads( html )
+		
+		return ( True, data ) # No exception means API connected
+			
 	def api_get_core_list( self ):
 		""" Obtenir la liste des Cores liées au compte spark
 		
