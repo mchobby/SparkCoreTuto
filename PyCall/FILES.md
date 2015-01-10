@@ -49,6 +49,9 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
 						     
 * access-tokens-list.py - S'adresse à l' API pour lister tous les access
 						  token liés à votre compte Spark Cloud.
+						  
+* access-token-create.py - Crée/ajoute un access_token lié à votre compte
+						    Spark Cloud. Utilise le client_id 'xytest'
 
 
 == Les Tutoriels Spark Core ==
