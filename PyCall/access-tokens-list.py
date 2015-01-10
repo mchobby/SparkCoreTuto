@@ -61,7 +61,7 @@ def main():
 		
 	result = api.api_get_access_tokens( user, passwd )
 	access_token_list = result[1]
-	print( access_token_list )
+	# print( access_token_list )
 	
 	for access_token in access_token_list:
 		print( '--- Access Token: %s ---' % access_token['token'] )
