@@ -16,6 +16,8 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           paramètres de votre PROPRE compte Spark Cloud
                           et le CORE_ID de votre propre Spark Core
 
+== Fichiers (Requête sur Core) ==
+
 * netled.py             - fait des appels de fonction sur le core 
                           pour controler des LED sur le core via le 
                           programme netled.ino
@@ -31,17 +33,22 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           le programme magneticswitch.ino
                           
 * core-info.py          - Obtenir plus d'information sur un core.
-						  Les fonctions et les variables publiées.
-						  
-* cores-list.py			- Lister les cores associé à votre compte
-                          Spark Cloud
+						  Les fonctions et les variables publiées.  
                           
-* core-tinkerting.py    - Comment définir une classe SparkCoreTinker
+* core-tinkering.py     - Comment définir une classe SparkCoreTinker
 						  et utiliser ses méthodes pour faciliter les
 						  appel sur l'API publié par le Spark Core.
 						  Exemple basé sur Tinker de SPARK :-)
 						  Vous pouvez donc controler directement Tinker
 						     depuis Python :-)
+
+== Fichiers (Requête sur API Spark Cloud) ==
+
+* cores-list.py			- Lister les cores associé à votre compte
+                          Spark Cloud
+						     
+* access-tokens-list.py - S'adresse à l' API pour lister tous les access
+						  token liés à votre compte Spark Cloud.
 
 
 == Les Tutoriels Spark Core ==
