@@ -13,7 +13,7 @@ Appel d'API sur un Spark Core faisant fonctionner le programme
 Copyright 2015 DMeurisse <info@mchobby.be>
 
 Voir tutoriel:
-  http://wiki.mchobby.be/index.php?title=Spark-Core-Bouton
+  http://mchobby.be/wiki/index.php?title=Spark-Python-Call
      
 Ou acheter Spark Core -- et soutenir nos travaux --
 
@@ -53,8 +53,8 @@ config = Config()
 
 
 def main():
-	# Execute le programme qui récupère le nombre de pression sur 
-	#  le Spark Core.
+	# Execute le programme interroge le core faisant fonctionner  
+	# le programme Tinker
 	api = SparkApi( access_token = config.access_token, debug = False )
 	# ou utiliser directement votre access_token
 	#api = SparkApi( access_token = '123412341234', debug = False )
