@@ -43,6 +43,7 @@ Remarks:
      https://docs.python.org/2/howto/urllib2.html
 """
 from urllib2 import HTTPError
+from httplib import BadStatusLine 
 import urllib2, urllib
 import json, base64
 
@@ -85,10 +86,16 @@ class SparkApiError( HTTPError ):
 			err (HTTPError) - Classe à la source de l'erreur
 			sTipMsg (str) - Message complémentaire ou raison possible
 							  de l'erreur sur l'API Spark."""
-		assert isinstance( err, HTTPError ), 'err parameter must be HttpError type' 
+
+		assert isinstance( err, HTTPError ) or isinstance( err, BadStatusLine ), 'err parameter must be HttpError or BasStatusLine type' 
 		assert isinstance( sTipMsg, str ), 'sTipError (additional info on Spark Api error) must be str type!' 
 		
-		HTTPError.__init__( self, err.url, err.code, err.msg, err.hdrs, err.fp )
+		if isinstance( err, HTTPError ):
+			HTTPError.__init__( self, err.url, err.code, err.msg, err.hdrs, err.fp )
+		else:
+			# When Having BadStatusLine error, just encapsulate it
+			# into the SparkApiError anyway!
+			HTTPError.__init__( self, 'none', -1, 'Source exception class: %s, with message \'%s\'' % (err.__class__.__name__,err.message ), None, None )
 		self.__tip_msg = sTipMsg
 		
 	def __str__( self ):
@@ -374,6 +381,59 @@ class SparkApi( object ):
 		data = json.loads( html )
 		
 		return ( True, data ) # No exception means API connected
+		
+	def api_delete_access_token( self,  spark_username, spark_password, access_token ):
+		""" effacer un access token pour votre compte spark. 
+
+		Parameters:
+			spark_username (str) - votre compte utilisateur utilisé 
+				sur Spark Cloud. Habituellement une adresse email
+			spark_password (str) - votre mot de passe du compte spark
+				cloud.
+				
+			access_token (str) - l'access token à effacer.
+		
+		Returns:
+		Retourne le tuple (connected, api_result) avec api_result tel
+		que renvoyées par l'API Spark Cloud.
+		S'il n'y a pas d'exception alors l'API est connectée... le 
+		premier élément du tuple est toujours True. 
+		
+		Remarks:
+		La structure tuple est utilisé pour rester consistant avec 
+		les autres appels		
+		"""		
+		url = self.__api_base_url+'access_tokens/'+access_token
+		self.printdebug( url )
+		
+		base64UserPassword = base64.encodestring( '%s:%s' % (spark_username, spark_password) )[:-1]
+		req = urllib2.Request( url ) # No DATA parameter
+		# Ajout basic authorization à l'entête
+		req.add_header( "Authorization", "Basic %s" % base64UserPassword )
+		# Changer la methode en DELETE
+		req.get_method = lambda: 'DELETE'
+		try:
+			response = urllib2.urlopen(req)
+		except HTTPError, err:
+			if( err.code == 400 ):
+				# Eviter le confusion de lecture sur erreur 400
+				# relancer l'erreur avec le texte d'aide SPARK_HTTP_ERRORS 
+				# orienté Core!
+				apierror = SparkApiError( err, 'Spark Account may be invalid' )
+				raise apierror				
+			else:
+				# gère les cas d'erreur Http Error et fait une surcharge si
+				# approprié
+				self.api_manage_error( err )
+		except BadStatusLine, err:
+			apierror = SparkApiError( err, 'Maybe are you trying to drop the last created access_token!' )
+			raise apierror
+				
+		html = response.read()
+		data = json.loads( html )
+		
+		
+		return ( True, data ) # No exception means API connected 
 			
 	def api_get_core_list( self ):
 		""" Obtenir la liste des Cores liées au compte spark
