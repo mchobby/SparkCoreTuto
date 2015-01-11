@@ -54,7 +54,7 @@ def main():
 	#api = SparkApi( access_token = '123412341234', debug = False )
 		
 	# Afficher la liste des acces_tokens liés au compte spark core
-	print( '----- Create an access_tokens -----' ) 
+	print( '----- Create an \'xytest\' access_tokens -----' ) 
 	print( 'Spark Account needed to access such API' ) 
 	user = raw_input( 'Your Spark Account: ' )
 	passwd = raw_input( 'Your Spark Password: ' )
