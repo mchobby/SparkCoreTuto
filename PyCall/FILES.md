@@ -52,6 +52,10 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
 						  
 * access-token-create.py - Crée/ajoute un access_token lié à votre compte
 						    Spark Cloud. Utilise le client_id 'xytest'
+						    
+* access-token-delete.py - Efface un access_token lié à votre compte
+						    Spark Cloud. Efface les token liés au 
+						    client_id 'xytest'
 
 
 == Les Tutoriels Spark Core ==
