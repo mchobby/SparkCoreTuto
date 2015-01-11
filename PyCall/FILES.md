@@ -15,6 +15,12 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           de sparkapi-sample.ini et y encoder les 
                           paramètres de votre PROPRE compte Spark Cloud
                           et le CORE_ID de votre propre Spark Core
+                          
+* sparkapi-inifile-tls.py - *** OUTILS PRATIQUE ***
+                          Programme simple qui se connecte sur votre 
+						  compte Spark et affiche l'access_token et 
+						  CORE_ID a copier/coller dans le fichier 
+						  sparkapi.ini
 
 == Fichiers (Requête sur Core) ==
 
