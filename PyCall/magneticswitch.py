@@ -43,8 +43,8 @@ MA 02110-1301, USA.
 History:
   04 jan 2015 - Dominique - v 0.1 (première release)
 """  
-from sparkapi.sparkapi import SparkApi
-from sparkapi.config import Config 
+from sparkapi import SparkApi
+from sparkapi import Config 
 
 # Ouvre le fichier sparkapi.ini pour éviter de Hard Coder des données
 # sensible comme l'access_token dans les programmes d'exemple publié sur

@@ -61,7 +61,7 @@ SPARK_HTTP_ERRORS = {
     400 : ( 'Bad Request'  , 'Your request is not understood by the Core, or the requested subresource (variable/function) has not been exposed. wrong access token may also cause this error!' ), 
 	401 : ( 'Unauthorized' , 'Your access_token/account_info is not valid.' ),
 	403 : ( 'Forbidden'    , 'Your access token is not authorized to interface with this Core.' ),
-	404 : ( 'Not Found'    , 'The Core you requested is not currently connected to the cloud.' ),
+	404 : ( 'Not Found'    , 'The requested Core is not currently connected to the cloud OR exposed variable/function does not match!' ),
 	408 : ( 'Timed Out'    , 'The cloud experienced a significant delay when trying to reach the Core.' ),
 	500 : ( 'Server errors', 'Spark Server Failure. Something went wrong on Spark end.' ) 
 	}

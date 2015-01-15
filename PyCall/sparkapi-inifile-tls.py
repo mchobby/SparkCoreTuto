@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-from sparkapi.sparkapi import SparkApi
+from sparkapi import SparkApi
 """ sparkapi-inifile-tls.py
 
     This program will help you to collect the information to place
