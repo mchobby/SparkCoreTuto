@@ -1,0 +1,23 @@
+Presta Console - Installation Notes
+
+=== Needed Tools ===
+* Python 2.7 
+* Pip installer
+* GIT
+
+-- Install Pip --
+sudo apt-get install python-pip
+
+=== Needed Python Libs ===
+Use pip to install the following libs
+  * httplib2
+  * poster   - helper to post  multipart/form-data 
+  
+-- Libs installation --
+
+sudo pip install httplib2
+
+sudo pip install poster
+
+
+
