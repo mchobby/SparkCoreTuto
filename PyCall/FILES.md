@@ -47,6 +47,14 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
 						  Exemple basé sur Tinker de SPARK :-)
 						  Vous pouvez donc controler directement Tinker
 						     depuis Python :-)
+						     
+* core-flash.py			- Compiler et flasher votre core avec un fichier
+                          code source sur le disque.
+                          Utilise la source lecture-tmp36.ino (dispo
+                          dans les source). Vous pouvez le remplacer
+                          par wrong.ino (voir code de core-flash.py) 
+                          pour voir ce que donnerait une erreur de 
+                          compilation.
 
 == Fichiers (Requête sur API Spark Cloud) ==
 

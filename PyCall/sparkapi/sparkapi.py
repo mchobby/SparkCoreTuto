@@ -37,15 +37,24 @@ History:
   07 jan 2015 - Dominique -       Refactoring
   10 jan 2015 - Dominique -       get_api_access_tokens
 								  SPARK_API_URL_V1 *** changed !! ***
+  16 jan 2015 - Dominique - v 0.4 Ajout de api_core_flash
 ------------------------------------------------------------------------
 Remarks:
   Doc Python sur urllib2
      https://docs.python.org/2/howto/urllib2.html
 """
-from urllib2 import HTTPError
+import urllib2 
+from urllib2 import HTTPError      # Voir install-notes.txt
 from httplib import BadStatusLine 
 import urllib2, urllib
 import json, base64
+
+import ntpath
+from poster.encode import multipart_encode, MultipartParam  # Voir install-notes.txt
+from poster.streaminghttp import register_openers
+
+# Register the streaming http handlers with urllib2
+register_openers()
 
 # --- API Spark Cloud ---
 SPARK_API_URL    = 'https://api.spark.io/'
@@ -65,6 +74,14 @@ SPARK_HTTP_ERRORS = {
 	408 : ( 'Timed Out'    , 'The cloud experienced a significant delay when trying to reach the Core.' ),
 	500 : ( 'Server errors', 'Spark Server Failure. Something went wrong on Spark end.' ) 
 	}
+	
+# --- Statut pour SparkCore.flash() ---
+FLASH_OK                 = 0
+FLASH_CORE_NOT_CONNECTED = 1
+FLASH_COMPILE_ERROR      = 2
+
+FLASH_STATUS_TEXT = { FLASH_OK : 'Core is being Flashed', FLASH_CORE_NOT_CONNECTED : 'Core not connected', FLASH_COMPILE_ERROR : 'Compile error' }
+
 
 class SparkApiError( HTTPError ):
 	""" Erreur d'appel sur l'API Spark. Contient des infos complémentaires
@@ -181,7 +198,6 @@ class SparkApi( object ):
 		else:
 			return ( False, None )
 
-
 	def api_core_call_function( self, core_id, function_name, params ):
 		""" Faire une requête sur l'API Spark Cloud pour exécuté une
 		fonction publiée par le Core interrogé.
@@ -253,6 +269,52 @@ class SparkApi( object ):
 			return ( False, None )
 			
 		return ( True, data )
+		
+	def api_core_flash( self, core_id, source_filename ):
+		""" Compile un fichier 'ino' et flash le core 
+		Parameters:
+			core_id (str) - identification du code
+			source_filename (str) - le fichier à uploader
+		
+		Remarks:
+			Source http://atlee.ca/software/poster/ """
+		assert isinstance( core_id, basestring), 'core_id must be str/unicode type' # basestring match str & unicode
+		assert isinstance( source_filename, basestring), 'filename must be str/unicode type' # basestring match str & unicode
+
+		# headers contains the necessary Content-Type and Content-Length
+		# datagen is a generator object that yields the encoded parameters
+		file_param = MultipartParam.from_file("file", source_filename)
+		datagen, headers = multipart_encode( [ file_param ] )
+
+		#datagen, headers = multipart_encode({"file": open(source_filename,'rb')}) # that version fails
+		
+		url = self.__api_base_url+'devices/'+core_id+'?access_token='+self.__access_token
+		self.printdebug( url )
+		
+		req = urllib2.Request( url, datagen, headers ) 
+		# Changer la methode en PUT
+		req.get_method = lambda: 'PUT'
+				
+		try:
+			try:
+				response = urllib2.urlopen( req ) #opener.open( req )
+				html = response.read()
+			except HTTPError, err:
+				# gère les cas d'erreur Http Error et fait une surcharge si
+				# approprié
+				self.api_manage_error( err )
+			except BadStatusLine, err:
+				# apierror = SparkApiError( err, 'The core seems unavailable/offline!' )
+				# raise apierror
+				return ( False, None )
+		except SparkApiError, err:
+			if( err.code == 408 ): # time-out
+				return ( False, None ) # Not connected
+			raise err
+				
+		data = json.loads( html )
+		
+		return ( True, data ) # No exception means API connected 
 				
 	def api_manage_error( self, err ):
 		""" Gere les cas d'erreur HTTP sur les appels d'API Spark Cloud.
@@ -599,7 +661,34 @@ class SparkCore( object ):
 			print ( '   %s' % (func) )
 
 		# {u'functions': [], u'name': u'mch-demo', u'variables': {u'reading': u'int32', u'temperature': u'double', u'voltage': u'double'}, u'connected': True, u'cc3000_patch_version': u'1.29', u'id': u'54ff6c066667515111481467'}
-
+		
+	def flash( self, source_filename ):
+		""" Compile le fichier source_filename et flash votre core.
+		Utilise le compilateur en ligne de Spark et effecture un flash 
+		via la connexion WiFi (comme le fait Spark Build).
+		
+		Parameters:
+			source_filename (str) : nom du fichier source à utiliser.
+			
+		Returns:
+			Un tuple (flash_ok, flash_status, contenu renvoyé par l'API). 
+			Une exception est possible en cas d'erreur
+		"""
+		
+		content = self.api.api_core_flash( self.__core_id, source_filename )
+		
+		if( content[0] == False ):
+			# Si pas connecté --> ce n'est forcement pas flashé!
+			return ( False, FLASH_CORE_NOT_CONNECTED, content[1] )
+		elif isinstance( content[1], dict ) and ('Update started' in content[1].values() ):
+			# Contient {u'message': u'Update started', u'cmd': u'Event', u'name': u'Update'} ?
+			# Le flash est donc en cours
+			return ( True, FLASH_OK, content[1] )
+		elif isinstance( content[1], dict ) and ( 'errors' in content[1].keys() ):
+			return ( False, FLASH_COMPILE_ERROR, content[1] )
+		
+		raise Exception( 'Unexpected error case!' ) 
+		
 class TinkerError( Exception ):
 	""" Specific error class linked to SparkCoreTinker class """
 	pass
