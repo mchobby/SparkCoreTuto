@@ -61,8 +61,6 @@ def main():
 	# ou utiliser directement votre core_id
 	#core = api.get_core( '0123456789abcdef' )
 	
-	# Lecture et affichage des info d'un Core.
-	# retourne un tuple (connected, information_structure)
 	print( '-- Flash le programme lecture-tmp36.ino sur le Core --' )
 	
 	# Activer la seconde ligne si vous voulez voir le résultat d'une
