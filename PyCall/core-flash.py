@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 #
-"""core-info.py
+"""core-flash.py
 
-Appel d'API sur un Spark Core pour obtenir des informations sur 
-  votre Core. Retourne en autre les fonctions et les variables publiés.
+Flasher votre Core à partir d'un script Python.
+
+Appel d'API sur un Spark Cloud pour envoyer un code source (fichier 
+  ino), le faire compiler par les serveurs de Spark PUIS Flasher
+  notre Core avec le binaire obtenu.
   
 Copyright 2015 DMeurisse <info@mchobby.be>
 
-Voir tutoriel:
-  http://wiki.mchobby.be/index.php?title=Spark-Core-Bouton
+Voir nos tutoriels Spark Core:
+  http://wiki.mchobby.be/index.php?title=Spark.IO-Accueil
      
 Ou acheter Spark Core -- et soutenir nos travaux --
 
@@ -32,7 +35,7 @@ MA 02110-1301, USA.
 
 ------------------------------------------------------------------------
 History:
-  01 jan 2015 - Dominique - v 0.1 (première release)
+  17 jan 2015 - Dominique - v 0.1 (première release)
 """  
 from sparkapi import SparkApi
 from sparkapi import FLASH_STATUS_TEXT
@@ -48,8 +51,10 @@ config = Config()
 
 
 def main():
-	# Execute le programme qui récupère le température lue sur un 
-	#  Spark Core
+	# Execute le script qui compile le fichier lecture-tmp36.ino
+	# disponible sur le disque PUIS flasher le core avec le binaire 
+	# Résultant 
+	 
 	api = SparkApi( access_token = config.access_token, debug = False )
 	# ou utiliser directement votre access_token
 	#api = SparkApi( access_token = '123412341234', debug = False )
