@@ -14,7 +14,12 @@ Code permettant de faire des appels sur l'API Spark Cloud depuis du code en Pyth
                           Cloud. Vous devez créer ce fichier à partir
                           de sparkapi-sample.ini et y encoder les 
                           paramètres de votre PROPRE compte Spark Cloud
-                          et le CORE_ID de votre propre Spark Core
+                          et le CORE_ID de votre propre Spark Core.
+                          
+                          Le fichier sparkapi.ini doit être présent:
+                           * soit dans le répertoire courant 
+                           * soit (en second essai de chargement ) dans le répertoire où se trouve 
+                             la source config.py. Donc /PyCall/sparkapi/sparkapi.ini
                           
 * sparkapi-inifile-tls.py - *** OUTILS PRATIQUE ***
                           Programme simple qui se connecte sur votre 

@@ -16,6 +16,11 @@ La description des differents fichiers est fait dans le fichier FILES.md
  
 Vous devrez créer votre propre fichier sparkapi.ini à partir
 du fichier sparkapi-sample.ini
+
+Le fichier sparkapi.ini doit être présent:
+* soit dans le répertoire courant 
+* soit (en second essai de chargement ) dans le répertoire où se trouve 
+  config.py. Donc /PyCall/sparkapi/sparkapi.ini
   
 == Qu'est ce que Spark Core? ==
 
